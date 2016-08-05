@@ -2,9 +2,9 @@
 
 This is a logging package for Go based on Dave Cheney's [blog post about logging](http://dave.cheney.net/2015/11/05/lets-talk-about-logging).
 
-It could certainly use some more advanced package filtering functionality such as regex filter based for example.  Pull requests are very welcome.
+It has all I need for now but could certainly use some more advanced package filtering functionality.  Pull requests are of course very welcome.
 
-See [the example command] for usage.
+See [the example command](exmaple/) for usage.
 
 ```
 
