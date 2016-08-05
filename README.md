@@ -4,7 +4,7 @@ This is a logging package for Go based on Dave Cheney's [blog post about logging
 
 It has all I need for now but could certainly use some more advanced package filtering functionality.  Pull requests are of course very welcome.
 
-See [the example command](exmaple/) for usage.
+See [the example command](example/) for usage.
 
 ```
 
