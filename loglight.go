@@ -7,23 +7,9 @@ import (
 	"runtime"
 )
 
-type packageFilter interface {
-	Filter(packageName string) bool
-}
-
-type PackageBlacklist struct {
-	PackageNames map[string]bool
-}
-
-type PackageWhitelist struct {
-	PackageNames map[string]bool
-}
-
-type NullPackageFilter struct {}
-
 type Logger struct {
 	stdout *log.Logger
-	packageFilter packageFilter
+	packageFilter PackageFilter
 }
 
 func NewLogger() *Logger {
@@ -35,13 +21,8 @@ func NewLogger() *Logger {
 	return logger.WithNoPackageFilter()
 }
 
-func (logger *Logger) WithBlacklist(blacklist PackageBlacklist) *Logger {
+func (logger *Logger) WithFilter(blacklist PackageFilter) *Logger {
 	logger.packageFilter = blacklist
-	return logger
-}
-
-func (logger *Logger) WithWhitelist(whitelist PackageWhitelist) *Logger {
-	logger.packageFilter = whitelist
 	return logger
 }
 
@@ -51,11 +32,11 @@ func (logger *Logger) WithNoPackageFilter() *Logger {
 }
 
 func (logger *Logger) LogInfo(msg string) {
-		logger.stdout.Print(msg)
+	logger.stdout.Print(msg)
 }
 
 func (logger *Logger) LogInfof(format string, v ...interface{}) {
-		logger.stdout.Printf(format, v)
+	logger.stdout.Printf(format, v)
 }
 
 func (logger *Logger) LogDebugf(format string, v ...interface{}) {
@@ -85,14 +66,3 @@ func retrieveCallPackage() string {
 	return packageName
 }
 
-func(blacklist PackageBlacklist) Filter(packageName string) bool {
-	return !blacklist.PackageNames[packageName]
-}
-
-func(whitelist PackageWhitelist) Filter(packageName string) bool {
-	return whitelist.PackageNames[packageName]
-}
-
-func(packageFilter NullPackageFilter) Filter(packageName string) bool {
-	return true
-}
