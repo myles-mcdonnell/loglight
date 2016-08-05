@@ -17,15 +17,11 @@ func main() {
 	} ()
 
 	//all packages other than those listed
-	//blacklist := logging.PackageBlacklist{PackageNames:map[string]bool{"github.com/myles-mcdonnell/logging/example/subPackage": true}}
-	//subPackage.Logger = logging.NewLogger().WithBlacklist(blacklist)
-
-	//Only the packages listed
-	//whitelist := loglight.PackageWhitelist{PackageNames:map[string]bool{"github.com/myles-mcdonnell/logging/example/subPackage": true}}
-	//subPackage.Logger = loglight.NewLogger().WithWhitelist(whitelist)
+	filter := loglight.NewPackageNameFilter([]string{"github.com/myles-mcdonnell/logging/example/subPackage"}, false)
+	subPackage.Logger = loglight.NewLogger().WithFilter(filter)
 
 	//No package filter, all debug messages will be written to stdout
-	subPackage.Logger = loglight.NewLogger()
+	//subPackage.Logger = loglight.NewLogger()
 
 	subPackage.Logger.LogInfo("This message is interesting to users of the software")
 

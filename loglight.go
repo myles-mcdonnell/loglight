@@ -7,41 +7,27 @@ import (
 	"runtime"
 )
 
-type packageFilter interface {
-	Filter(packageName string) bool
-}
-
-type PackageBlacklist struct {
-	PackageNames map[string]bool
-}
-
-type PackageWhitelist struct {
-	PackageNames map[string]bool
-}
-
-type NullPackageFilter struct {}
-
 type Logger struct {
-	stdout *log.Logger
-	packageFilter packageFilter
+	logPrinter logPrinter
+	packageFilter PackageFilter
+}
+
+type logPrinter interface {
+	Print(...interface{})
+	Printf(string, ...interface{})
 }
 
 func NewLogger() *Logger {
 
 	logger := &Logger{
-		stdout: log.New(os.Stdout, "",3),
+		logPrinter: log.New(os.Stdout, "",3),
 	}
 
 	return logger.WithNoPackageFilter()
 }
 
-func (logger *Logger) WithBlacklist(blacklist PackageBlacklist) *Logger {
-	logger.packageFilter = blacklist
-	return logger
-}
-
-func (logger *Logger) WithWhitelist(whitelist PackageWhitelist) *Logger {
-	logger.packageFilter = whitelist
+func (logger *Logger) WithFilter(filter PackageFilter) *Logger {
+	logger.packageFilter = filter
 	return logger
 }
 
@@ -50,23 +36,30 @@ func (logger *Logger) WithNoPackageFilter() *Logger {
 	return logger
 }
 
+func (logger *Logger) injectLogPrinter(logPrinter logPrinter) *Logger {
+
+	logger.logPrinter = logPrinter
+
+	return logger
+}
+
 func (logger *Logger) LogInfo(msg string) {
-		logger.stdout.Print(msg)
+	logger.logPrinter.Print(msg)
 }
 
 func (logger *Logger) LogInfof(format string, v ...interface{}) {
-		logger.stdout.Printf(format, v)
+	logger.logPrinter.Printf(format, v)
 }
 
 func (logger *Logger) LogDebugf(format string, v ...interface{}) {
 	if logger.packageFilter.Filter(retrieveCallPackage()) {
-		logger.stdout.Printf(format, v)
+		logger.logPrinter.Printf(format, v)
 	}
 }
 
 func (logger *Logger) LogDebug(msg string) {
 	if logger.packageFilter.Filter(retrieveCallPackage()) {
-		logger.stdout.Printf(msg)
+		logger.logPrinter.Print(msg)
 	}
 }
 
@@ -85,14 +78,3 @@ func retrieveCallPackage() string {
 	return packageName
 }
 
-func(blacklist PackageBlacklist) Filter(packageName string) bool {
-	return !blacklist.PackageNames[packageName]
-}
-
-func(whitelist PackageWhitelist) Filter(packageName string) bool {
-	return whitelist.PackageNames[packageName]
-}
-
-func(packageFilter NullPackageFilter) Filter(packageName string) bool {
-	return true
-}
