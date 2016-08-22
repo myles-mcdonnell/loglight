@@ -51,9 +51,30 @@ func (logger *Logger) LogInfof(format string, v ...interface{}) {
 	logger.logPrinter.Printf(format, v)
 }
 
+func (logger *Logger) LogInfoDeferf(format string, getOutput func() string) {
+	logger.logPrinter.Printf(format, getOutput())
+}
+
+func (logger *Logger) LogInfoDefer(getOutput func() string) {
+	logger.logPrinter.Print(getOutput())
+}
+
+
 func (logger *Logger) LogDebugf(format string, v ...interface{}) {
 	if logger.packageFilter.Filter(retrieveCallPackage()) {
 		logger.logPrinter.Printf(format, v)
+	}
+}
+
+func (logger *Logger) LogDebugDeferf(format string, getOutput func() string) {
+	if logger.packageFilter.Filter(retrieveCallPackage()) {
+		logger.logPrinter.Printf(format, getOutput())
+	}
+}
+
+func (logger *Logger) LogDebugDefer(format string, getOutput func() string) {
+	if logger.packageFilter.Filter(retrieveCallPackage()) {
+		logger.logPrinter.Print(getOutput())
 	}
 }
 
