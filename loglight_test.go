@@ -86,3 +86,21 @@ func TestOutput_WithPackageFilterFalse(t *testing.T) {
 		t.Fail()
 	}
 }
+
+func TestWhitelist (t *testing.T) {
+
+	filter := NewPackageNameFilter([]string{"test"}, true)
+
+	if !filter.Filter("test") {
+		t.Fail()
+	}
+}
+
+func TestBlacklist (t *testing.T) {
+
+	filter := NewPackageNameFilter([]string{"test"}, false)
+
+	if filter.Filter("test") {
+		t.Fail()
+	}
+}

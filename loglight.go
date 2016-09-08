@@ -5,22 +5,60 @@ import (
 	"os"
 	"strings"
 	"runtime"
+	"encoding/json"
+	"fmt"
 )
-
-type Logger struct {
-	logPrinter logPrinter
-	packageFilter PackageFilter
-}
 
 type logPrinter interface {
 	Print(...interface{})
 	Printf(string, ...interface{})
 }
 
-func NewLogger() *Logger {
+type PackageFilter interface {
+	Filter(packageName string) bool
+}
+
+type Logger struct {
+	logPrinter logPrinter
+	packageFilter PackageFilter
+	outputDebug bool
+}
+
+type NullPackageFilter struct {}
+
+type packageNameFilter struct {
+	packageNames map[string]bool
+	isWhitelist  bool
+}
+
+func NewPackageNameFilter(packageNames []string, isWhitelist bool) PackageFilter {
+
+	filter := &packageNameFilter{isWhitelist: isWhitelist, packageNames: make(map[string]bool)}
+
+	for _, name := range packageNames {
+		filter.packageNames[name] = true
+	}
+
+	return filter
+}
+
+func(filter packageNameFilter) Filter(packageName string) bool {
+	return filter.packageNames[packageName] && filter.isWhitelist
+}
+
+func(packageFilter NullPackageFilter) Filter(packageName string) bool {
+	return true
+}
+
+func NewLogger(outputDebug bool) *Logger {
+
+	if outputDebug == nil {
+		outputDebug = true
+	}
 
 	logger := &Logger{
 		logPrinter: log.New(os.Stdout, "",3),
+		outputDebug: outputDebug,
 	}
 
 	return logger.WithNoPackageFilter()
@@ -44,23 +82,50 @@ func (logger *Logger) injectLogPrinter(logPrinter logPrinter) *Logger {
 }
 
 func (logger *Logger) LogInfo(msg string) {
-	logger.logPrinter.Print(msg)
+	if logger.packageFilter.Filter(retrieveCallPackage()) {
+		logger.logPrinter.Print(msg)
+	}
 }
 
 func (logger *Logger) LogInfof(format string, v ...interface{}) {
-	logger.logPrinter.Printf(format, v)
-}
-
-func (logger *Logger) LogDebugf(format string, v ...interface{}) {
 	if logger.packageFilter.Filter(retrieveCallPackage()) {
 		logger.logPrinter.Printf(format, v)
 	}
 }
 
-func (logger *Logger) LogDebug(msg string) {
+func (logger *Logger) LogInfoStruct(msg interface{}) {
 	if logger.packageFilter.Filter(retrieveCallPackage()) {
+		logger.logPrinter.Print(getJson(msg))
+	}
+}
+
+func (logger *Logger) LogDebugf(format string, v ...interface{}) {
+	if logger.outputDebug && logger.packageFilter.Filter(retrieveCallPackage()) {
+		logger.logPrinter.Printf(format, v)
+	}
+}
+
+func (logger *Logger) LogDebug(msg string) {
+	if logger.outputDebug && logger.packageFilter.Filter(retrieveCallPackage()) {
 		logger.logPrinter.Print(msg)
 	}
+}
+
+func (logger *Logger) LogDebugStruct(msg interface{}) {
+	if logger.outputDebug && logger.packageFilter.Filter(retrieveCallPackage()) {
+		logger.logPrinter.Print(getJson(msg))
+	}
+}
+
+func getJson(msg interface{}) string {
+
+	bytes, err := json.Marshal(msg)
+
+	if err != nil {
+		return fmt.Printf("error serializing msg %s", err.Error())
+	}
+
+	return string(bytes)
 }
 
 func retrieveCallPackage() string {
