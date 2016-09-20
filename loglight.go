@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 	"strings"
-	"runtime"
 	"fmt"
+	"runtime"
 	"gopkg.in/myles-mcdonnell/jsonx.v1"
 )
 
@@ -115,7 +115,7 @@ func (logger *Logger) LogDebugStruct(msg interface{}) {
 
 func getJson(msg interface{}) string {
 
-	bytes, err := jsonx.Marshal(msg)
+	bytes, err := jsonx.MarshalWithOptions(msg, jsonx.MarshalOptions{SkipUnserializableFields:true})
 
 	if err != nil {
 		return fmt.Sprintf("error serializing msg %s", err.Error())
