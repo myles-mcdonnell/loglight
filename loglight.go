@@ -5,8 +5,8 @@ import (
 	"os"
 	"strings"
 	"runtime"
-	"encoding/json"
 	"fmt"
+	"gopkg.in/myles-mcdonnell/jsonx.v1"
 )
 
 type logPrinter interface {
@@ -51,10 +51,6 @@ func(packageFilter NullPackageFilter) Filter(packageName string) bool {
 }
 
 func NewLogger(outputDebug bool) *Logger {
-
-	if outputDebug == nil {
-		outputDebug = true
-	}
 
 	logger := &Logger{
 		logPrinter: log.New(os.Stdout, "",3),
@@ -119,10 +115,10 @@ func (logger *Logger) LogDebugStruct(msg interface{}) {
 
 func getJson(msg interface{}) string {
 
-	bytes, err := json.Marshal(msg)
+	bytes, err := jsonx.Marshal(msg)
 
 	if err != nil {
-		return fmt.Printf("error serializing msg %s", err.Error())
+		return fmt.Sprintf("error serializing msg %s", err.Error())
 	}
 
 	return string(bytes)

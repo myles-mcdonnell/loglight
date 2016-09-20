@@ -29,7 +29,7 @@ func (mockPackageFilter *mockPackageFilter) Filter(packageName string) bool {
 func TestOutput_NoPackageFilter(t *testing.T) {
 
 	logPrinter := new(mockLogPrinter)
-	logger := NewLogger().injectLogPrinter(logPrinter)
+	logger := NewLogger(true).injectLogPrinter(logPrinter)
 
 	logger.LogDebug("ABC")
 	logger.LogInfo("DEF")
@@ -46,11 +46,30 @@ func TestOutput_NoPackageFilter(t *testing.T) {
 	}
 }
 
+func TestOutput_NoPackageFilter_NoDebug(t *testing.T) {
+
+	logPrinter := new(mockLogPrinter)
+	logger := NewLogger(false).injectLogPrinter(logPrinter)
+
+	logger.LogDebug("ABC")
+	logger.LogInfo("DEF")
+
+	abc, def := false, false
+
+	for _, msg := range logPrinter.messages {
+		abc = abc || msg == "ABC"
+		def = def || msg == "DEF"
+	}
+
+	if abc || !def {
+		t.Fail()
+	}
+}
 
 func TestOutput_WithPackageFilterTrue(t *testing.T) {
 
 	logPrinter := new(mockLogPrinter)
-	logger := NewLogger().injectLogPrinter(logPrinter).WithFilter(&mockPackageFilter{filter: true})
+	logger := NewLogger(true).injectLogPrinter(logPrinter).WithFilter(&mockPackageFilter{filter: true})
 
 	logger.LogDebug("ABC")
 	logger.LogInfo("DEF")
@@ -70,7 +89,7 @@ func TestOutput_WithPackageFilterTrue(t *testing.T) {
 func TestOutput_WithPackageFilterFalse(t *testing.T) {
 
 	logPrinter := new(mockLogPrinter)
-	logger := NewLogger().injectLogPrinter(logPrinter).WithFilter(&mockPackageFilter{filter: false})
+	logger := NewLogger(true).injectLogPrinter(logPrinter).WithFilter(&mockPackageFilter{filter: false})
 
 	logger.LogDebug("ABC")
 	logger.LogInfo("DEF")
@@ -82,7 +101,7 @@ func TestOutput_WithPackageFilterFalse(t *testing.T) {
 		def = def || msg == "DEF"
 	}
 
-	if abc || !def {
+	if abc || def {
 		t.Fail()
 	}
 }

@@ -18,7 +18,7 @@ func main() {
 
 	//all packages other than those listed
 	filter := loglight.NewPackageNameFilter([]string{"github.com/myles-mcdonnell/logging/example/subPackage"}, false)
-	subPackage.Logger = loglight.NewLogger().WithFilter(filter)
+	subPackage.Logger = loglight.NewLogger(true).WithFilter(filter)
 
 	//No package filter, all debug messages will be written to stdout
 	//subPackage.Logger = loglight.NewLogger()
