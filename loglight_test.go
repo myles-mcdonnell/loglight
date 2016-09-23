@@ -29,7 +29,7 @@ func (mockPackageFilter *mockPackageFilter) Filter(packageName string) bool {
 func TestOutput_NoPackageFilter(t *testing.T) {
 
 	logPrinter := new(mockLogPrinter)
-	logger := NewLogger(true).injectLogPrinter(logPrinter)
+	logger := NewLogger(true, 0).injectLogPrinter(logPrinter)
 
 	logger.LogDebug("ABC")
 	logger.LogInfo("DEF")
@@ -49,7 +49,7 @@ func TestOutput_NoPackageFilter(t *testing.T) {
 func TestOutput_NoPackageFilter_NoDebug(t *testing.T) {
 
 	logPrinter := new(mockLogPrinter)
-	logger := NewLogger(false).injectLogPrinter(logPrinter)
+	logger := NewLogger(false, 0).injectLogPrinter(logPrinter)
 
 	logger.LogDebug("ABC")
 	logger.LogInfo("DEF")
@@ -69,7 +69,7 @@ func TestOutput_NoPackageFilter_NoDebug(t *testing.T) {
 func TestOutput_WithPackageFilterTrue(t *testing.T) {
 
 	logPrinter := new(mockLogPrinter)
-	logger := NewLogger(true).injectLogPrinter(logPrinter).WithFilter(&mockPackageFilter{filter: true})
+	logger := NewLogger(true, 0).injectLogPrinter(logPrinter).WithFilter(&mockPackageFilter{filter: true})
 
 	logger.LogDebug("ABC")
 	logger.LogInfo("DEF")
@@ -89,7 +89,7 @@ func TestOutput_WithPackageFilterTrue(t *testing.T) {
 func TestOutput_WithPackageFilterFalse(t *testing.T) {
 
 	logPrinter := new(mockLogPrinter)
-	logger := NewLogger(true).injectLogPrinter(logPrinter).WithFilter(&mockPackageFilter{filter: false})
+	logger := NewLogger(true, 0).injectLogPrinter(logPrinter).WithFilter(&mockPackageFilter{filter: false})
 
 	logger.LogDebug("ABC")
 	logger.LogInfo("DEF")

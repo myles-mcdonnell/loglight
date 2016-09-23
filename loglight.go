@@ -50,10 +50,10 @@ func(packageFilter NullPackageFilter) Filter(packageName string) bool {
 	return true
 }
 
-func NewLogger(outputDebug bool) *Logger {
+func NewLogger(outputDebug bool, flag int) *Logger {
 
 	logger := &Logger{
-		logPrinter: log.New(os.Stdout, "",3),
+		logPrinter: log.New(os.Stdout, "", flag),
 		outputDebug: outputDebug,
 	}
 
