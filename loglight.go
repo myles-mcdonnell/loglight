@@ -52,8 +52,13 @@ func(packageFilter NullPackageFilter) Filter(packageName string) bool {
 
 func NewLogger(outputDebug bool) *Logger {
 
+	return NewLoggerWithFlag(outputDebug, 3)
+}
+
+func NewLoggerWithFlag(outputDebug bool, flag int) *Logger {
+
 	logger := &Logger{
-		logPrinter: log.New(os.Stdout, "",3),
+		logPrinter: log.New(os.Stdout, "",flag),
 		outputDebug: outputDebug,
 	}
 
