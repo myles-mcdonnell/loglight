@@ -22,6 +22,11 @@ type Logger struct {
 	logPrinter logPrinter
 	packageFilter PackageFilter
 	outputDebug bool
+	outputJson bool
+}
+
+type message struct {
+	Message string
 }
 
 type NullPackageFilter struct {}
@@ -52,12 +57,11 @@ func(packageFilter NullPackageFilter) Filter(packageName string) bool {
 
 func NewLogger(outputDebug bool, flag int) *Logger {
 
-	logger := &Logger{
+	return &Logger{
 		logPrinter: log.New(os.Stdout, "", flag),
 		outputDebug: outputDebug,
+		packageFilter: &NullPackageFilter{},
 	}
-
-	return logger.WithNoPackageFilter()
 }
 
 func (logger *Logger) WithFilter(filter PackageFilter) *Logger {
@@ -65,8 +69,9 @@ func (logger *Logger) WithFilter(filter PackageFilter) *Logger {
 	return logger
 }
 
-func (logger *Logger) WithNoPackageFilter() *Logger {
-	logger.packageFilter = &NullPackageFilter{}
+func (logger *Logger) OutputJson() *Logger {
+	logger.outputJson = true
+
 	return logger
 }
 
@@ -78,39 +83,41 @@ func (logger *Logger) injectLogPrinter(logPrinter logPrinter) *Logger {
 }
 
 func (logger *Logger) LogInfo(msg string) {
-	if logger.packageFilter.Filter(retrieveCallPackage()) {
-		logger.logPrinter.Print(msg)
-	}
+	logger.print(func() interface{} {return logger.format(msg)}, false)
 }
 
 func (logger *Logger) LogInfof(format string, v ...interface{}) {
-	if logger.packageFilter.Filter(retrieveCallPackage()) {
-		logger.logPrinter.Printf(format, v)
-	}
+	logger.print(func() interface{} {return logger.format(fmt.Sprintf(format, v))}, false)
 }
 
 func (logger *Logger) LogInfoStruct(msg interface{}) {
-	if logger.packageFilter.Filter(retrieveCallPackage()) {
-		logger.logPrinter.Print(getJson(msg))
-	}
-}
-
-func (logger *Logger) LogDebugf(format string, v ...interface{}) {
-	if logger.outputDebug && logger.packageFilter.Filter(retrieveCallPackage()) {
-		logger.logPrinter.Printf(format, v)
-	}
+	logger.print(func() interface{} {return getJson(msg)}, false)
 }
 
 func (logger *Logger) LogDebug(msg string) {
-	if logger.outputDebug && logger.packageFilter.Filter(retrieveCallPackage()) {
-		logger.logPrinter.Print(msg)
-	}
+	logger.print(func() interface{} {return logger.format(msg)}, true)
+}
+
+func (logger *Logger) LogDebugf(format string, v ...interface{}) {
+	logger.print(func() interface{} {return logger.format(fmt.Sprintf(format, v))}, true)
 }
 
 func (logger *Logger) LogDebugStruct(msg interface{}) {
-	if logger.outputDebug && logger.packageFilter.Filter(retrieveCallPackage()) {
-		logger.logPrinter.Print(getJson(msg))
+	logger.print(func() interface{} {return getJson(msg)}, true)
+}
+
+func (logger *Logger) print(getMsg func() interface{}, debug bool) {
+	if (!debug || logger.outputDebug) && logger.packageFilter.Filter(retrieveCallPackage()) {
+		logger.logPrinter.Print(getMsg())
 	}
+}
+
+func (logger *Logger) format(msg string) string {
+	if logger.outputJson {
+		return getJson(message{Message:msg})
+	}
+
+	return msg;
 }
 
 func getJson(msg interface{}) string {

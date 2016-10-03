@@ -25,6 +25,11 @@ func (mockPackageFilter *mockPackageFilter) Filter(packageName string) bool {
 	return mockPackageFilter.filter
 }
 
+type aStruct struct {
+	One string
+	Two string
+}
+
 
 func TestOutput_NoPackageFilter(t *testing.T) {
 
@@ -104,6 +109,59 @@ func TestOutput_WithPackageFilterFalse(t *testing.T) {
 	if abc || def {
 		t.Fail()
 	}
+}
+
+
+func TestOutput_Struct(t *testing.T) {
+
+	logPrinter := new(mockLogPrinter)
+	logger := NewLogger(true, 0).injectLogPrinter(logPrinter)
+
+	logger.LogInfoStruct(aStruct{One:"1", Two: "2"})
+
+	for _, msg := range logPrinter.messages {
+		if msg == "{\"One\":\"1\",\"Two\":\"2\"}" {
+			return
+		}
+	}
+
+	t.Fail()
+
+}
+
+
+func TestOutput_StructOutputJson(t *testing.T) {
+
+	logPrinter := new(mockLogPrinter)
+	logger := NewLogger(true, 0).injectLogPrinter(logPrinter).OutputJson()
+
+	logger.LogInfoStruct(aStruct{One:"1", Two: "2"})
+
+	for _, msg := range logPrinter.messages {
+		if msg == "{\"One\":\"1\",\"Two\":\"2\"}" {
+			return
+		}
+	}
+
+	t.Fail()
+
+}
+
+func Test_OutputJson(t *testing.T) {
+
+	logPrinter := new(mockLogPrinter)
+	logger := NewLogger(true, 0).injectLogPrinter(logPrinter).OutputJson()
+
+	logger.LogInfo("test")
+
+	for _, msg := range logPrinter.messages {
+		if msg == "{\"Message\":\"test\"}" {
+			return
+		}
+	}
+
+	t.Fail()
+
 }
 
 func TestWhitelist (t *testing.T) {
