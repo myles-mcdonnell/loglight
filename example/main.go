@@ -14,14 +14,16 @@ func main() {
 			log.Fatalf("FATAL ERROR: %s", err)
 		}
 
-	} ()
+	}()
+
 
 	//all packages other than those listed
-	filter := loglight.NewPackageNameFilter([]string{"github.com/myles-mcdonnell/logging/example/subPackage"}, false)
-	subPackage.Logger = loglight.NewLogger(true).WithFilter(filter)
+	//filter := loglight.NewPackageNameFilter([]string{"github.com/myles-mcdonnell/logging/example/subPackage"}, false)
+	subPackage.Logger = loglight.NewLoggerWithOptions(true, 0, false, false)
 
 	//No package filter, all debug messages will be written to stdout
 	//subPackage.Logger = loglight.NewLogger()
+
 
 	subPackage.Logger.LogInfo("This message is interesting to users of the software")
 

@@ -23,6 +23,7 @@ type Logger struct {
 	packageFilter PackageFilter
 	outputDebug bool
 	outputJson bool
+	outputPretty bool
 }
 
 type message struct {
@@ -64,6 +65,16 @@ func NewLogger(outputDebug bool, flag int) *Logger {
 	}
 }
 
+func NewLoggerWithOptions(outputDebug bool, flag int, outputJson bool, outputPretty bool) *Logger {
+
+	logger := NewLogger(outputDebug, flag);
+
+	logger.outputJson = outputJson;
+	logger.outputPretty = outputPretty;
+
+	return logger
+}
+
 func (logger *Logger) WithFilter(filter PackageFilter) *Logger {
 	logger.packageFilter = filter
 	return logger
@@ -76,7 +87,6 @@ func (logger *Logger) OutputJson() *Logger {
 }
 
 func (logger *Logger) injectLogPrinter(logPrinter logPrinter) *Logger {
-
 	logger.logPrinter = logPrinter
 
 	return logger
@@ -91,7 +101,7 @@ func (logger *Logger) LogInfof(format string, v ...interface{}) {
 }
 
 func (logger *Logger) LogInfoStruct(msg interface{}) {
-	logger.print(func() interface{} {return getJson(msg)}, false)
+	logger.print(func() interface{} {return getJson(msg, logger.outputPretty)}, false)
 }
 
 func (logger *Logger) LogDebug(msg string) {
@@ -103,7 +113,7 @@ func (logger *Logger) LogDebugf(format string, v ...interface{}) {
 }
 
 func (logger *Logger) LogDebugStruct(msg interface{}) {
-	logger.print(func() interface{} {return getJson(msg)}, true)
+	logger.print(func() interface{} {return getJson(msg, logger.outputPretty)}, true)
 }
 
 func (logger *Logger) print(getMsg func() interface{}, debug bool) {
@@ -114,21 +124,29 @@ func (logger *Logger) print(getMsg func() interface{}, debug bool) {
 
 func (logger *Logger) format(msg string) string {
 	if logger.outputJson {
-		return getJson(message{Message:msg})
+		return getJson(message{Message:msg}, logger.outputPretty)
 	}
 
 	return msg;
 }
 
-func getJson(msg interface{}) string {
+func getJson(msg interface{}, pretty bool) string {
 
-	bytes, err := jsonx.MarshalWithOptions(msg, jsonx.MarshalOptions{SkipUnserializableFields:true})
+	bytes, err := marshallJson(msg, pretty)
 
 	if err != nil {
 		return fmt.Sprintf("error serializing msg %s", err.Error())
 	}
 
 	return string(bytes)
+}
+
+func marshallJson(msg interface{}, pretty bool) ([]byte, error) {
+	if pretty {
+		return jsonx.MarshalIndentWithOptions(msg, "", "    ", jsonx.MarshalOptions{SkipUnserializableFields:true})
+	} else {
+		return jsonx.MarshalWithOptions(msg, jsonx.MarshalOptions{SkipUnserializableFields:true})
+	}
 }
 
 func retrieveCallPackage() string {
