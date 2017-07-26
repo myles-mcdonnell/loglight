@@ -1,7 +1,11 @@
 package loglight
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
+	"io"
+	"strings"
 	"testing"
 )
 
@@ -30,141 +34,81 @@ type aStruct struct {
 	Two string
 }
 
-
 func TestOutput_NoPackageFilter(t *testing.T) {
 
-	logPrinter := new(mockLogPrinter)
-	logger := NewLogger(true, 0).injectLogPrinter(logPrinter)
+	buf := new(bytes.Buffer)
+	logger := NewLogger(true, NewJsonLogFormatter(false).Format).WithLogWriter(buf)
 
-	logger.LogDebug("ABC")
-	logger.LogInfo("DEF")
+	logger.DebugDefer(func() interface{} { return "ABC" })
+	logger.InfoDefer(func() interface{} { return "DEF" })
 
-	abc, def := false, false
+	reader := bufio.NewReader(buf)
 
-	for _, msg := range logPrinter.messages {
-		abc = abc || msg == "ABC"
-		def = def || msg == "DEF"
+	CompareString(reader, `{"LogLevel":"DEBUG","Data":"ABC"}`, t)
+	CompareString(reader, `{"LogLevel":"INFO","Data":"DEF"}`, t)
+}
+
+func CompareString(reader *bufio.Reader, expected string, t *testing.T) {
+	str, err := reader.ReadString('\n')
+	if err != nil {
+		t.Log(err)
+		t.Fail()
 	}
 
-	if !abc || !def {
+	if strings.Compare(strings.Trim(str, "\n"), expected) != 0 {
+		t.Log("Expected: " + expected + " Actual: " + str)
 		t.Fail()
 	}
 }
 
 func TestOutput_NoPackageFilter_NoDebug(t *testing.T) {
 
-	logPrinter := new(mockLogPrinter)
-	logger := NewLogger(false, 0).injectLogPrinter(logPrinter)
+	buf := new(bytes.Buffer)
+	logger := NewLogger(false, NewJsonLogFormatter(false).Format).WithLogWriter(buf)
 
-	logger.LogDebug("ABC")
-	logger.LogInfo("DEF")
+	logger.DebugDefer(func() interface{} { return "ABC" })
+	logger.InfoDefer(func() interface{} { return "DEF" })
 
-	abc, def := false, false
+	reader := bufio.NewReader(buf)
 
-	for _, msg := range logPrinter.messages {
-		abc = abc || msg == "ABC"
-		def = def || msg == "DEF"
-	}
-
-	if abc || !def {
-		t.Fail()
-	}
+	CompareString(reader, `{"LogLevel":"INFO","Data":"DEF"}`, t)
 }
 
 func TestOutput_WithPackageFilterTrue(t *testing.T) {
 
-	logPrinter := new(mockLogPrinter)
-	logger := NewLogger(true, 0).injectLogPrinter(logPrinter).WithFilter(&mockPackageFilter{filter: true})
+	buf := new(bytes.Buffer)
+	logger := NewLogger(true, NewJsonLogFormatter(false).Format).WithLogWriter(buf).WithFilter(&mockPackageFilter{filter: true})
 
-	logger.LogDebug("ABC")
-	logger.LogInfo("DEF")
+	logger.DebugDefer(func() interface{} { return "ABC" })
+	logger.InfoDefer(func() interface{} { return "DEF" })
 
-	abc, def := false, false
+	reader := bufio.NewReader(buf)
 
-	for _, msg := range logPrinter.messages {
-		abc = abc || msg == "ABC"
-		def = def || msg == "DEF"
-	}
-
-	if !abc || !def {
-		t.Fail()
-	}
+	CompareString(reader, `{"LogLevel":"DEBUG","Data":"ABC"}`, t)
+	CompareString(reader, `{"LogLevel":"INFO","Data":"DEF"}`, t)
 }
 
 func TestOutput_WithPackageFilterFalse(t *testing.T) {
 
-	logPrinter := new(mockLogPrinter)
-	logger := NewLogger(true, 0).injectLogPrinter(logPrinter).WithFilter(&mockPackageFilter{filter: false})
+	buf := new(bytes.Buffer)
+	logger := NewLogger(true, NewJsonLogFormatter(false).Format).WithLogWriter(buf).WithFilter(&mockPackageFilter{filter: false})
 
-	logger.LogDebug("ABC")
-	logger.LogInfo("DEF")
+	//logger.Debug(func() interface{} { return "ABC" })
+	//logger.Info(func() interface{} { return "DEF" })
 
-	abc, def := false, false
+	logger.Debug("ABC")
+	logger.Info("DEF")
 
-	for _, msg := range logPrinter.messages {
-		abc = abc || msg == "ABC"
-		def = def || msg == "DEF"
-	}
+	reader := bufio.NewReader(buf)
 
-	if abc || def {
+	_, err := reader.ReadString('\n')
+
+	if err != io.EOF {
 		t.Fail()
 	}
 }
 
-
-func TestOutput_Struct(t *testing.T) {
-
-	logPrinter := new(mockLogPrinter)
-	logger := NewLogger(true, 0).injectLogPrinter(logPrinter)
-
-	logger.LogInfoStruct(aStruct{One:"1", Two: "2"})
-
-	for _, msg := range logPrinter.messages {
-		if msg == "{\"One\":\"1\",\"Two\":\"2\"}" {
-			return
-		}
-	}
-
-	t.Fail()
-
-}
-
-
-func TestOutput_StructOutputJson(t *testing.T) {
-
-	logPrinter := new(mockLogPrinter)
-	logger := NewLogger(true, 0).injectLogPrinter(logPrinter).OutputJson()
-
-	logger.LogInfoStruct(aStruct{One:"1", Two: "2"})
-
-	for _, msg := range logPrinter.messages {
-		if msg == "{\"One\":\"1\",\"Two\":\"2\"}" {
-			return
-		}
-	}
-
-	t.Fail()
-
-}
-
-func Test_OutputJson(t *testing.T) {
-
-	logPrinter := new(mockLogPrinter)
-	logger := NewLogger(true, 0).injectLogPrinter(logPrinter).OutputJson()
-
-	logger.LogInfo("test")
-
-	for _, msg := range logPrinter.messages {
-		if msg == "{\"Message\":\"test\"}" {
-			return
-		}
-	}
-
-	t.Fail()
-
-}
-
-func TestWhitelist (t *testing.T) {
+func TestWhitelist(t *testing.T) {
 
 	filter := NewPackageNameFilter([]string{"test"}, true)
 
@@ -173,7 +117,7 @@ func TestWhitelist (t *testing.T) {
 	}
 }
 
-func TestBlacklist (t *testing.T) {
+func TestBlacklist(t *testing.T) {
 
 	filter := NewPackageNameFilter([]string{"test"}, false)
 
