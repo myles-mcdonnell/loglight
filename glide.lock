@@ -1,10 +1,5 @@
 hash: a4d719626a6450775fe422eece75371100f39bca2a24507282e0c0ceb031e48b
 updated: 2017-07-26T14:45:46.024932089+01:00
-imports:
-- name: github.com/myles-mcdonnell/loglight
-  version: 77bf45bb30331292cc5acf041f05ec5f3df61f23
-  subpackages:
-  - example/subPackage
 - name: gopkg.in/myles-mcdonnell/jsonx.v1
   version: 595cd67fa646f364bbcf59d16659d07e716abd9f
 testImports: []
