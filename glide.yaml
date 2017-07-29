@@ -1,7 +1,4 @@
 package: github.com/mylesmcdonnell/loglight
 import:
-- package: github.com/myles-mcdonnell/loglight
-  subpackages:
-  - example/subPackage
 - package: gopkg.in/myles-mcdonnell/jsonx.v1
   version: ^1.0.0

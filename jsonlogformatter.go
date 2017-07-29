@@ -19,10 +19,10 @@ func NewJsonLogFormatter(pretty bool) JsonLogFormatter {
 
 func (jsonLogFormatter JsonLogFormatter) Format(logEntry LogEntry) string {
 
-	return getJson(logEntry, jsonLogFormatter.pretty)
+	return GetJson(logEntry, jsonLogFormatter.pretty)
 }
 
-func getJson(msg interface{}, pretty bool) string {
+func GetJson(msg interface{}, pretty bool) string {
 
 	bytes, err := marshallJson(msg, pretty)
 

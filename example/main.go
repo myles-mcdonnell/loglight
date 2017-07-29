@@ -1,36 +1,57 @@
 package main
 
 import (
+	"fmt"
 	"github.com/myles-mcdonnell/loglight"
-	"github.com/myles-mcdonnell/loglight/example/subPackage"
-	"log"
+	"time"
 )
 
 func main() {
 
-	defer func() {
+	logger := loglight.NewLogger(true, loglight.NewJsonLogFormatter(true).Format)
 
-		if err := recover(); err != nil {
-			log.Fatalf("FATAL ERROR: %s", err)
-		}
+	logger.Info("This message is interesting to users of the software")
 
-	}()
+	logger.Debug("This message provides some information useful to maintainers of the software, such as the internal state")
 
+	customerLogger := &CustomLogger{logger: loglight.NewLogger(true, CustomFormatter)}
 
-	//all packages other than those listed
-	//filter := loglight.NewPackageNameFilter([]string{"github.com/myles-mcdonnell/logging/example/subPackage"}, false)
-	subPackage.Logger = loglight.NewLoggerWithOptions(true, 0, false, false)
+	customerLogger.Debug("123", "custom log event")
+}
 
-	//No package filter, all debug messages will be written to stdout
-	//subPackage.Logger = loglight.NewLogger()
+type CustomLogEvent struct {
+	TimeUtc    time.Time
+	Key        string
+	Additional interface{}
+}
 
+func CustomFormatter(logEntry loglight.LogEntry) string {
 
-	subPackage.Logger.LogInfo("This message is interesting to users of the software")
+	logEvent, _ := logEntry.Data.(CustomLogEvent)
 
-	subPackage.Logger.LogDebug("This message provides some information useful to maintainers of the software, such as the internal state")
+	return fmt.Sprintf("%s : %s : %s : %s", logEntry.LogLevel, logEvent.Key, logEvent.TimeUtc.Format("02/01/2006 15:04:05:00"), loglight.GetJson(logEvent.Additional, false))
+}
 
-	subPackage.DoThing()
+func (logger *CustomLogger) Debug(key string, additional interface{}) {
+	logger.logger.Debug(newCustomLogEvent(key, additional))
+}
 
-	panic("Something went horribly wrong that this software can not recover from")
+func (logger *CustomLogger) Info(key string, additional interface{}) {
+	logger.logger.Info(newCustomLogEvent(key, additional))
+}
 
+func (logger *CustomLogger) Error(key string, additional interface{}) {
+	logger.logger.Error(newCustomLogEvent(key, additional))
+}
+
+func newCustomLogEvent(key string, additional interface{}) CustomLogEvent {
+	return CustomLogEvent{
+		TimeUtc:    time.Now().UTC(),
+		Key:        key,
+		Additional: additional,
+	}
+}
+
+type CustomLogger struct {
+	logger *loglight.Logger
 }
